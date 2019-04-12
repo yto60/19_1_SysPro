@@ -1,0 +1,53 @@
+# [注意]
+# 下記の # で始まるコメント行を変更（修正，削除）しないこと．
+# 課題Nの回答は，### ExerciseN ### のコメント行の下の領域にプログラムのみ示してください．
+# プロンプト（%）は書かないで下さい．
+# 完成しなかった中途半端な結果でも，できるだけ書きましょう．
+
+### ID ### 学籍番号を「NN_NNNNN」のように書いて下さい
+17B16210
+
+### Email ### mメールアドレスを書いて下さい
+yamane.h.aa@m.titech.ac.jp
+
+### Name ### 氏名を「東工 太郎」のように書いて下さい
+山根 初美
+
+### Exercise1 ### 課題1
+echo `ls /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys/u*d.h`
+
+
+
+### Exercise2 ### 課題2
+grep -r '#define errno' /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys
+
+
+### Exercise3 ### 課題3
+grep '/tcp' /etc/services | grep -v '#^' | wc -l
+
+
+### Exercise4 ### 課題4
+cat syscall_headers | awk -F '\t' '{print $1}' | uniq | wc -l
+
+
+### Exercise5 ### 課題5
+grep 'printf' /usr/include/sys/syscall.h || echo 'NotFound'
+
+
+### Exercise6 ### 課題6
+kill `ps | grep sleep | grep -v grep | awk '{print $1}'`
+
+
+### ExerciseA ### 発展課題A
+cat syscall_headers | awk -F '\t' '{print $2}' | sort | uniq -c | sort -r | head -n 3
+
+
+### ExerciseB ### 発展課題B
+(rev /usr/share/dict/words; cat /usr/share/dict/words) | sort | uniq -c | sort | grep 2 | wc -l
+
+
+### Comment ### 感想（採点対象外，好きに書いて下さい）
+
+
+
+### END ###
