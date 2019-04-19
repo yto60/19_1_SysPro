@@ -31,7 +31,6 @@ int do_cat(int size, char **args) {
 		// implement here
 
 		int fd, rd;
-		char buf[buffer_size];
 
 		// file open
 		fd = open(filename, O_RDONLY);
@@ -41,8 +40,12 @@ int do_cat(int size, char **args) {
 
 		// read and write
 		while (1) {
+			char buf[buffer_size];
 			rd = read(fd, buf, buffer_size);
 			if (rd == 0) {
+				// if (write(STDOUT_FILENO, buf, strlen(buf)) == -1) {
+				// 	printErrorIo1();
+				// }
 				break;
 			} else if (rd == -1) {
 				printErrorIo1();
