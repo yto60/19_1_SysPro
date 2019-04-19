@@ -2,16 +2,17 @@ SRCS?=main.c mycat.c
 HDRS=main.h mycat.h
 OBJS=$(SRCS:%.c=%.o)
 EXES=mycat
-GENS=large.bin small1.bin small2.bin small3.bin small-all.bin
+GENS=large.bin small1.bin small2.bin small3.bin small4.bin small-all.bin
 REPORTS=$(SRCS) $(HDRS) report.txt
 
 CC=gcc
-CFLAGS=-std=c99 -pedantic -Wall -Werror
+CFLAGS=-std=gnu99 -pedantic -Wall -Werror
 LDFLAGS=
 RM=rm -f
 TIME=/usr/bin/time
 
 SIZE_10MB=10485760
+SIZE_10MBP=10485764
 SIZE_1GB=1073741824
 
 URL=https://www.se.cs.titech.ac.jp/lecture/sysprog/2-io
@@ -47,6 +48,8 @@ small2.bin:
 	cat /dev/random | base64 | head -c $(SIZE_10MB) > $@
 small3.bin:
 	cat /dev/random | base64 | head -c $(SIZE_10MB) > $@
+small4.bin:
+	cat /dev/random | base64 | head -c $(SIZE_10MBP) > $@
 small-all.bin: small1.bin small2.bin small3.bin
 	cat $+ > $@
 
@@ -86,13 +89,17 @@ allclean: clean genclean
 
 test: test1 test2 testA
 
-test1: small1.bin
+test1: small1.bin small4.bin
 	./mycat -q small1.bin > tmp.bin
 	@sh test-cmp.sh test1 tmp.bin small1.bin
+	./mycat -q small4.bin > tmp.bin
+	@sh test-cmp.sh test1-p tmp.bin small4.bin
 
-test3: small1.bin
+test3: small1.bin small4.bin
 	./mycat -q -l small1.bin > tmp.bin
 	@sh test-cmp.sh test3 tmp.bin small1.bin
+	./mycat -q -l small4.bin > tmp.bin
+	@sh test-cmp.sh test3-p tmp.bin small4.bin
 
 testA: small1.bin small2.bin small3.bin
 	./mycat -q small1.bin small2.bin small3.bin > tmp.bin
