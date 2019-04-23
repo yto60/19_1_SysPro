@@ -1,7 +1,7 @@
 #include "mycat.h"
 #include "main.h"
 
-#include <fcntl.h>  // open
+#include <fcntl.h>	// open
 #include <unistd.h> // write, close
 
 // エラー出力用
@@ -41,11 +41,9 @@ int do_cat(int size, char **args) {
 		// read and write
 		while (1) {
 			char buf[buffer_size];
+			for (int i = 0; i < buffer_size; i++) buf[i] = '\0';
 			rd = read(fd, buf, buffer_size);
 			if (rd == 0) {
-				// if (write(STDOUT_FILENO, buf, strlen(buf)) == -1) {
-				// 	printErrorIo1();
-				// }
 				break;
 			} else if (rd == -1) {
 				printErrorIo1();
