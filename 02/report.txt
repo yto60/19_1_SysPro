@@ -38,7 +38,7 @@ yamane.h.aa@m.titech.ac.jp
 
 
 ### ExerciseA ### 発展課題A
-
+実装したが、 -l オプションがない状態で正しく実行することができなかった。
 
 
 ### ExerciseB ### 発展課題B

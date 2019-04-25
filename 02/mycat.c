@@ -42,19 +42,11 @@ void freadFile() {
 
 		for (int i = 0; i < buffer_size && !feof(fin); i++) {
 			fread(buf + i, sizeof(char), 1, fin); // read 1 letter
-			if (buf[0] == EOF) return;
 		}
 
-		// if (strlen(buf) > 0) LOG("%d", strlen(buf));
-
-		for (int i = 0; i < buffer_size; i++) {
-			if (fwrite(buf + i, sizeof(char), 1, stdout) < 1 || buf[i] == EOF)
-				return; // read 1 letter
+		if (fwrite(buf, 1, strlen(buf), stdout) < 1) {
+			return;
 		}
-		// if (fwrite(buf, 1, strlen(buf), stdout) < 1) {
-		// 	return;
-		// }
-		// return;
 	}
 }
 
@@ -78,14 +70,42 @@ void openFile(int readFromStdin) {
 void readFile() {
 	while (1) {
 		char buf[buffer_size];
-		for (int i = 0; i < buffer_size; i++) buf[i] = '\0';
+		for (int i = 0; i < buffer_size; i++) buf[i] = EOF;
+		rd = 1;
+		// for (int i = 0; i < buffer_size && rd > 0; i++) {
+		// 	rd = read(fd, buf + i, 1);
+		// 	if (rd == -1) {
+		// 		printErrorIo1();
+		// 	}
+		// 	if (rd == 0) {
+		// 		buf[i] = EOF;
+		// 		break;
+		// 	}
+		// }
 		rd = read(fd, buf, buffer_size);
 		if (rd == 0) {
-			break;
+			return;
 		} else if (rd == -1) {
 			printErrorIo1();
 		}
-		if (write(STDOUT_FILENO, buf, strlen(buf)) == -1) {
+		// LOG("%s", buf);
+		// LOG("%d", strlen(buf));
+		// if (strlen(buf) > 1025) {
+		// 	LOG("%s", buf);
+		// }
+		if (buf[0] == EOF) {
+			break;
+		}
+		// for (int i = 0; i < buffer_size && buf[i] != EOF; i++) {
+		// 	if (write(STDOUT_FILENO, buf + i, 1) == -1) {
+		// 		printErrorIo1();
+		// 	}
+		// }
+		// int len = buffer_size;
+		// for (int i = 0; i < buffer_size; i++) {
+		// 	if (buf[i] == EOF) len = i - 1;
+		// }
+		if (write(STDOUT_FILENO, buf, rd) == -1) {
 			printErrorIo1();
 		}
 	}
