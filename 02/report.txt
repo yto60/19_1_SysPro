@@ -3,25 +3,38 @@
 # 課題Nの回答は，### ExerciseN ### のコメント行の下の領域に記述して下さい．
 
 ### ID ### 学籍番号を「NN_NNNNN」のように書いて下さい
-
+17_16210
 ### Email ### mメールアドレスを書いて下さい
-
+yamane.h.aa@m.titech.ac.jp
 ### Name ### 氏名を「東工 太郎」のように書いて下さい
-
+山根 初美
 ### Exercise1 ### 課題1
-
+実装しました。
 
 
 ### Exercise2 ### 課題2
+        5.16 real         3.47 user         0.69 sys
+        3.66 real         3.39 user         0.23 sys
+        3.64 real         3.38 user         0.23 sys
+        3.92 real         3.49 user         0.41 sys
+        6.25 real         4.40 user         1.82 sys
+       25.14 real        11.80 user        13.20 sys
+      174.28 real        69.58 user       103.91 sys
 
 
 
 ### Exercise3 ### 課題3
-
+実装しました。
 
 
 ### Exercise4 ### 課題4
-
+        5.24 real         3.53 user         0.75 sys
+        3.87 real         3.49 user         0.27 sys
+        3.85 real         3.48 user         0.27 sys
+        4.15 real         3.64 user         0.42 sys
+        4.53 real         3.84 user         0.57 sys
+        5.52 real         4.83 user         0.56 sys
+       13.04 real        12.03 user         0.68 sys
 
 
 ### ExerciseA ### 発展課題A
