@@ -8,7 +8,12 @@
 //     return strcmp(str1, str2) == 0 ? 1 : 0;
 // }
 
-void exec_command(char **args) {
+void my_exec(char **args) {
+	char *command = args[0];
+	execvp(command, args);
+}
+
+void exec_single(char **args) {
 	fflush(stdout);
 
 	pid_t pid = fork();
@@ -19,12 +24,30 @@ void exec_command(char **args) {
 	}
 	if (pid == 0) {
 		// child process
-		char *command = args[0];
-		execvp(command, args);
+		my_exec(args);
 	} else {
 		// parent process
 		wait(NULL);
 	}
+}
+
+void exec_left(node_t *node, int *fd) {
+	fflush(stdout);
+	exec_single(node->argv);
+	write(fd[1], stdout, 10);
+}
+
+void exec_right(node_t *node, int *fd) {
+	int n;
+	char buf[10];
+	node->argv[1] = malloc(sizeof(char) * 10);
+	// n = read(fd[0], node->argv[1], 10);
+	n = read(fd[0], buf, 10);
+	LOG("node: %s", inspect_node(node));
+	LOG("buf: %s", buf);
+	exec_single(node->argv);
+	close(fd[1]);
+	close(fd[0]);
 }
 
 /** Run a node and obtain an exit status. */
@@ -35,13 +58,17 @@ int invoke_node(node_t *node) {
 		for (int i = 0; node->argv[i] != NULL; i++) {
 			LOG("node->argv[%d]: \"%s\"", i, node->argv[i]);
 		}
-		exec_command(node->argv);
+		exec_single(node->argv);
 
 		return 0;
 
 	case N_PIPE: /* foo | bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
+		int fd[2];
+		pipe(fd);
+		exec_left(node->lhs, fd);
+		exec_right(node->rhs, fd);
 
 		return 0;
 
