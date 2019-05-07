@@ -16,6 +16,8 @@ int main() {
 	/* 課題1A:
 	 * 子プロセスを生成し，次のchild()を子プロセスでのみ実行するようにしなさい
 	 */
+	fflush(stdout);
+
 	pid_t pid = fork();
 
 	if (pid == -1) {
@@ -26,8 +28,10 @@ int main() {
 	/* 課題1B: ここで，生成した子プロセスの終了を待つようにしなさい */
 
 	if (pid == 0) {
+		// child process
 		child();
 	} else {
+		// parent process
 		wait(NULL);
 		printf("In main():  Process %d terminated.\n", getpid());
 	}
