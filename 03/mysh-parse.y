@@ -20,7 +20,7 @@ int yyerror(char *msg) {
 
 %start root
 
-%type  <node>   root exp piped_exp redirect_exp cmd_exp
+%type  <node>   root exp logical_exp piped_exp redirect_exp cmd_exp
 %type  <alist>  strs
 %type  <string> str
 
@@ -34,10 +34,19 @@ root
     ;
 
 exp /* foo ; bar */
-    : piped_exp tSCOLON exp
+    : logical_exp tSCOLON exp
       { $$ = make_node(N_SEQUENCE, $1, $3, NULL, NULL); }
+    | logical_exp
+    ;
+
+logical_exp /* foo && bar, foo |\ bar */
+    : piped_exp tANDAND logical_exp
+      { $$ = make_node(N_AND, $1, $3, NULL, NULL); }
+    | piped_exp tOROR logical_exp
+      { $$ = make_node(N_OR, $1, $3, NULL, NULL); }
     | piped_exp
     ;
+
 
 piped_exp /* foo | bar */
     : redirect_exp tOR piped_exp
