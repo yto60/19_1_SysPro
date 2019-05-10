@@ -14,7 +14,11 @@ RM=rm
 
 URL=https://www.se.cs.titech.ac.jp/lecture/sysprog/3-proc
 DLS=$(ALL_SRCS) $(CC_SRCS) $(HDRS) report.txt
+TESTS=t/test2-echo t/test3-fd t/test3-pipe t/test4-fd t/test4-words t/test5-append t/test5-fd-append t/test5-fd-stdin t/test5-fd-stdout t/test5-multi t/test5-stdin t/test5-stdout t/testA-echo t/testA-fd t/testB-and t/testB-or t/testC
+DLS2=fd.c fd2.c test-cmp.sh test-cmp-all.sh
 URLS=$(DLS:%=$(URL)/%)
+URLS2=$(DLS2:%=$(URL)/%)
+URLS_T=$(TESTS:%=$(URL)/%)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -50,6 +54,14 @@ fork0: fork0.o
 download:
 	curl --remote-name-all $(URLS)
 	touch $(GEN_SRCS)
+
+download2:
+	mkdir -p t
+	curl --remote-name-all $(URLS2)
+	(cd t && curl --remote-name-all $(URLS_T))
+
+	$(CC) $(CFLAGS) $(LDFLAGS) fd.c -o fd
+	$(CC) $(CFLAGS) $(LDFLAGS) fd2.c -o fd2
 
 report.zip: $(REPORTS)
 	zip $@ $+
