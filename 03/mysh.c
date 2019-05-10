@@ -31,18 +31,45 @@ void exec_single(char **args) {
 	}
 }
 
-void exec_left(node_t *node, int *fd) {
+void exec_double(char **argsl, char **argsr) {
 	fflush(stdout);
-	exec_single(node->argv);
-	write(fd[1], stdout, 10);
+	pid_t pidl = fork();
+	pid_t pidr = fork();
+	if (pidl == -1 || pidr == -1) {
+		perror("fork");
+		exit(errno);
+	}
+
+	int fd[2];
+	pipe(fd);
+	if (pidl == 0) {
+		my_exec(argsl);
+		write(fd[1], stdout, 10);
+	} else if (pidr == 0) {
+		int n;
+		argsr[1] = malloc(sizeof(char) * 10);
+		n = read(fd[0], argsr[1], 10);
+		// n = read(fd[0], buf, 10);
+		LOG("node: %s", inspect_node(argsr));
+		my_exec(argsr);
+
+	} else {
+		wait(NULL);
+	}
 }
+
+// void exec_left(node_t *node, int *fd) {
+// 	fflush(stdout);
+// 	exec_single(node->argv);
+// 	write(fd[1], stdout, 10);
+// }
 
 void exec_right(node_t *node, int *fd) {
 	int n;
 	char buf[10];
 	node->argv[1] = malloc(sizeof(char) * 10);
-	// n = read(fd[0], node->argv[1], 10);
-	n = read(fd[0], buf, 10);
+	n = read(fd[0], node->argv[1], 10);
+	// n = read(fd[0], buf, 10);
 	LOG("node: %s", inspect_node(node));
 	LOG("buf: %s", buf);
 	exec_single(node->argv);
@@ -65,15 +92,15 @@ int invoke_node(node_t *node) {
 	case N_PIPE: /* foo | bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
-		int fd[2];
-		pipe(fd);
-		exec_left(node->lhs, fd);
-		exec_right(node->rhs, fd);
+		// int fd[2];
+		// pipe(fd);
+		// exec_left(node->lhs, fd);
+		// exec_right(node->rhs, fd);
 
 		return 0;
 
-	case N_REDIRECT_IN:		/* foo < bar */
-	case N_REDIRECT_OUT:	/* foo > bar */
+	case N_REDIRECT_IN:			/* foo < bar */
+	case N_REDIRECT_OUT:		/* foo > bar */
 	case N_REDIRECT_APPEND: /* foo >> bar */
 		LOG("node->filename: %s", node->filename);
 
@@ -86,7 +113,7 @@ int invoke_node(node_t *node) {
 		return 0;
 
 	case N_AND: /* foo && bar */
-	case N_OR:  /* foo || bar */
+	case N_OR:	/* foo || bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
 
