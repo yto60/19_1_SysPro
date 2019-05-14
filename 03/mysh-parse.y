@@ -40,11 +40,12 @@ exp /* foo ; bar */
     ;
 
 logical_exp /* foo && bar, foo |\ bar */
-    : piped_exp tANDAND logical_exp
+    : piped_exp
+    | logical_exp tANDAND piped_exp
       { $$ = make_node(N_AND, $1, $3, NULL, NULL); }
-    | piped_exp tOROR logical_exp
+    | logical_exp tOROR piped_exp
       { $$ = make_node(N_OR, $1, $3, NULL, NULL); }
-    | piped_exp
+
     ;
 
 

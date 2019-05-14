@@ -63,6 +63,8 @@ download2:
 	$(CC) $(CFLAGS) $(LDFLAGS) fd.c -o fd
 	$(CC) $(CFLAGS) $(LDFLAGS) fd2.c -o fd2
 
+zip: report.zip
+
 report.zip: $(REPORTS)
 	zip $@ $+
 
