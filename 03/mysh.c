@@ -1,35 +1,13 @@
 #include "mysh.h"
-// #include "string.h"
 #include <errno.h>
 #include <fcntl.h> // open
 #include <stdlib.h>
 #include <unistd.h>
 #include <unistd.h> // write, close
 
-void my_exec(char **argv) {
-	LOG("%s %s", argv[0], argv[1]);
-	char *command = argv[0];
-	fflush(stdout);
-	execvp(command, argv);
-}
-
 void closefd(int *fd) {
 	close(fd[0]);
 	close(fd[1]);
-}
-
-void child_write(int *fd, char **argv) {
-	dup2(fd[1], STDOUT_FILENO);
-	closefd(fd);
-	// fflush(stdout);
-	my_exec(argv);
-}
-
-void child_read(int *fd, char **argv) {
-	dup2(fd[0], STDIN_FILENO);
-	closefd(fd);
-	// fflush(stdout);
-	my_exec(argv);
 }
 
 int open_file_read(char *filename) {
@@ -88,10 +66,27 @@ void dup2_redirect(node_t *node) {
 	return;
 }
 
-void exec_single(node_t *node) {
-	// char **argv = node->argv;
+void my_exec(node_t *node) {
+	char **argv;
 	int type = node->type;
 
+	if (type == N_REDIRECT_IN || type == N_REDIRECT_OUT ||
+			type == N_REDIRECT_APPEND) {
+		// リダイレクトありの場合
+		dup2_redirect(node);
+		argv = node->lhs->argv;
+	} else {
+		// なしの場合
+		argv = node->argv;
+	}
+
+	LOG("%s %s", argv[0], argv[1]);
+	char *command = argv[0];
+	fflush(stdout);
+	execvp(command, argv);
+}
+
+void exec_single(node_t *node) {
 	fflush(stdout);
 	pid_t pid = fork();
 
@@ -101,17 +96,7 @@ void exec_single(node_t *node) {
 	}
 	if (pid == 0) {
 		// child process
-		char **argv;
-		if (type == N_REDIRECT_IN || type == N_REDIRECT_OUT ||
-				type == N_REDIRECT_APPEND) {
-			dup2_redirect(node);
-			fflush(stdout);
-			argv = node->lhs->argv;
-			// my_exec(node->argv);
-		} else {
-			argv = node->argv;
-		}
-		my_exec(argv);
+		my_exec(node);
 		LOG("exec done");
 	} else {
 		// parent process
@@ -121,7 +106,7 @@ void exec_single(node_t *node) {
 	}
 }
 
-void exec_pipe_double(char **argvl, char **argvr) {
+void exec_pipe_double(node_t *node) {
 	fflush(stdout);
 
 	int fd[2];
@@ -136,7 +121,9 @@ void exec_pipe_double(char **argvl, char **argvr) {
 
 	if (pidl == 0) {
 		// 子1
-		child_write(fd, argvl);
+		dup2(fd[1], STDOUT_FILENO);
+		closefd(fd);
+		my_exec(node->lhs);
 	} else {
 		// 親
 		wait(NULL); // 子1のプロセスが終わるまで待つ
@@ -148,7 +135,9 @@ void exec_pipe_double(char **argvl, char **argvr) {
 		}
 		if (pidr == 0) {
 			// 子2
-			child_read(fd, argvr);
+			dup2(fd[0], STDIN_FILENO);
+			closefd(fd);
+			my_exec(node->rhs);
 		} else {
 			// 親
 			closefd(fd);
@@ -172,7 +161,7 @@ int invoke_node(node_t *node) {
 	case N_PIPE: /* foo | bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
-		exec_pipe_double(node->lhs->argv, node->rhs->argv);
+		exec_pipe_double(node);
 
 		return 0;
 
