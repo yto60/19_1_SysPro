@@ -21,7 +21,7 @@ int open_file_read(char *filename) {
 }
 
 int open_file_write(char *filename, int additional_flag) {
-	int filed = open(filename, O_WRONLY | O_CREAT | additional_flag, 066);
+	int filed = open(filename, O_WRONLY | O_CREAT | additional_flag, 0666);
 	// ファイルが存在しなかった場合、全員に読み取り・書き込み・実行権限を持たせたファイルを作成
 	if (filed == -1) {
 		LOG("failed opening file");
@@ -82,7 +82,7 @@ void my_exec(node_t *node) {
 
 	LOG("%s %s", argv[0], argv[1]);
 	char *command = argv[0];
-	fflush(stdout);
+	// fflush(stdout);
 	execvp(command, argv);
 }
 
@@ -106,7 +106,8 @@ void exec_single(node_t *node) {
 	}
 }
 
-void exec_pipe_double(node_t *node) {
+void exec_pipe(node_t *node, int is_root) {
+	int st;
 	fflush(stdout);
 
 	int fd[2];
@@ -114,6 +115,7 @@ void exec_pipe_double(node_t *node) {
 
 	// 子1をつくる
 	pid_t pidl = fork();
+	LOG("pidl: %d\n", pidl);
 	if (pidl == -1) {
 		perror("fork");
 		exit(errno);
@@ -126,9 +128,11 @@ void exec_pipe_double(node_t *node) {
 		my_exec(node->lhs);
 	} else {
 		// 親
-		wait(NULL); // 子1のプロセスが終わるまで待つ
+		wait(&st); // 子1のプロセスが終わるまで待つ
+		LOG("wait for pidl done (%d)", st);
 		// 子2をつくる
 		pid_t pidr = fork();
+		LOG("pidr: %d\n", pidr);
 		if (pidr == -1) {
 			perror("fork");
 			exit(errno);
@@ -137,11 +141,19 @@ void exec_pipe_double(node_t *node) {
 			// 子2
 			dup2(fd[0], STDIN_FILENO);
 			closefd(fd);
-			my_exec(node->rhs);
+			if (node->rhs->type == N_PIPE) {
+				exec_pipe(node->rhs, 0);
+			} else {
+				my_exec(node->rhs);
+			}
 		} else {
 			// 親
 			closefd(fd);
-			wait(NULL);
+			wait(&st);
+			LOG("%d: wait for pidr done (%d)", pidr, st);
+			if (!is_root) {
+				exit(0);
+			}
 		}
 	}
 }
@@ -161,7 +173,7 @@ int invoke_node(node_t *node) {
 	case N_PIPE: /* foo | bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
-		exec_pipe_double(node);
+		exec_pipe(node, 1);
 
 		return 0;
 
