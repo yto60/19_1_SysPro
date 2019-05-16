@@ -1,4 +1,5 @@
 *.bin
+*.zip
 mycat
 mysh
 03/test*.txt
