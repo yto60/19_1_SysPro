@@ -6,10 +6,6 @@
 #include <unistd.h>
 #include <unistd.h> // write, close
 
-// int is_eq(char *str1, char *str2){
-//     return strcmp(str1, str2) == 0 ? 1 : 0;
-// }
-
 void my_exec(char **argv) {
 	LOG("%s %s", argv[0], argv[1]);
 	char *command = argv[0];
@@ -47,8 +43,8 @@ int open_file_read(char *filename) {
 }
 
 int open_file_write(char *filename, int additional_flag) {
-	int filed = open(filename, O_WRONLY | O_CREAT | additional_flag, S_IRWXU);
-	// ファイルが存在しなかった場合、所有者に読み取り・書き込み・実行権限を持たせたファイルを作成
+	int filed = open(filename, O_WRONLY | O_CREAT | additional_flag, 066);
+	// ファイルが存在しなかった場合、全員に読み取り・書き込み・実行権限を持たせたファイルを作成
 	if (filed == -1) {
 		LOG("failed opening file");
 		perror("io1");

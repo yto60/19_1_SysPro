@@ -1,6 +1,7 @@
 *.bin
 mycat
 mysh
+03/test*.txt
 
 
 # Created by https://www.gitignore.io/api/c
