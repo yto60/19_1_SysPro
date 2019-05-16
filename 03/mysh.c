@@ -46,10 +46,9 @@ int open_file_read(char *filename) {
 	return filed;
 }
 
-int open_file_write(char *filename, int flags) {
-	int filed = open(
-			filename, flags | O_CREAT,
-			S_IRWXU); // ファイルが存在しなかった場合、所有者に読み取り・書き込み・実行権限を持たせたファイルを作成
+int open_file_write(char *filename, int additional_flag) {
+	int filed = open(filename, O_WRONLY | O_CREAT | additional_flag, S_IRWXU);
+	// ファイルが存在しなかった場合、所有者に読み取り・書き込み・実行権限を持たせたファイルを作成
 	if (filed == -1) {
 		LOG("failed opening file");
 		perror("io1");
@@ -76,12 +75,13 @@ void dup2_redirect(node_t *node) {
 		break;
 
 	case N_REDIRECT_OUT:
-		filed = open_file_write(node->filename, O_WRONLY | O_TRUNC);
+		filed = open_file_write(node->filename, O_TRUNC);
 		dup2(filed, STDOUT_FILENO);
 		break;
 
 	case N_REDIRECT_APPEND:
-		filed = open_file_write(node->filename, O_RDWR);
+		filed = open_file_write(node->filename, O_APPEND);
+		dup2(filed, STDOUT_FILENO);
 		break;
 
 	default:
@@ -105,7 +105,6 @@ void exec_single(node_t *node) {
 	}
 	if (pid == 0) {
 		// child process
-		// LOG(node->argv[0]);
 		char **argv;
 		if (type == N_REDIRECT_IN || type == N_REDIRECT_OUT ||
 				type == N_REDIRECT_APPEND) {
@@ -116,12 +115,7 @@ void exec_single(node_t *node) {
 		} else {
 			argv = node->argv;
 		}
-		// LOG(node->argv[0]);
 		my_exec(argv);
-		// char **argv = node->argv;
-		// LOG("%s %s", argv[0], argv[1]);
-		// char *command = argv[0];
-		// execvp(command, argv);
 		LOG("exec done");
 	} else {
 		// parent process
