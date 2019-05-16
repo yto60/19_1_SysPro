@@ -80,7 +80,10 @@ mysh[5]% cat count.txt
 # 実装完了したことを示すための適当なコマンドの実行結果をまるごと（myshプロンプト含めて）ペーストせよ．
 # 未完部分がある場合は明示せよ．
 
-実装していない。
+$ ./mysh -q
+mysh[1]% echo foo bar baz > out.txt; cat out.txt; rev out.txt
+foo bar baz
+zab rab oof
 
 
 ### ExerciseB ### 発展課題B

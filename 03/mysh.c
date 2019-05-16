@@ -158,6 +158,15 @@ void exec_pipe(node_t *node, int is_root) {
 	}
 }
 
+void exec_sequence(node_t *node) {
+	exec_single(node->lhs);
+	if (node->rhs->type == N_SEQUENCE) {
+		exec_sequence(node->rhs);
+	} else {
+		exec_single(node->rhs);
+	}
+}
+
 /** Run a node and obtain an exit status. */
 int invoke_node(node_t *node) {
 	LOG("Invoke: %s", inspect_node(node));
@@ -187,6 +196,7 @@ int invoke_node(node_t *node) {
 	case N_SEQUENCE: /* foo ; bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
+		exec_sequence(node);
 
 		return 0;
 
