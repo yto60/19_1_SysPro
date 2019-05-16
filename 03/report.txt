@@ -90,7 +90,20 @@ zab rab oof
 # 実装完了したことを示すための適当なコマンドの実行結果をまるごと（myshプロンプト含めて）ペーストせよ．
 # 未完部分がある場合は明示せよ．
 
-実装していない。
+$ ./mysh -q
+mysh[1]% true && echo succeeded
+succeeded
+mysh[2]% true || echo failed && echo succeeded
+succeeded
+mysh[3]% echo foo && echo bar && echo baz
+foo
+bar
+baz
+mysh[4]% echo foo | rev && echo baz
+oof
+baz
+mysh[5]% echo foo | rev || echo baz
+oof
 
 
 ### ExerciseC ### 発展課題C

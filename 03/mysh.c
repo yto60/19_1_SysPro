@@ -86,7 +86,7 @@ void my_exec(node_t *node) {
 	execvp(command, argv);
 }
 
-void exec_single(node_t *node) {
+int exec_single(node_t *node) {
 	fflush(stdout);
 	pid_t pid = fork();
 
@@ -98,15 +98,17 @@ void exec_single(node_t *node) {
 		// child process
 		my_exec(node);
 		LOG("exec done");
+		return 0;
 	} else {
 		// parent process
 		int st;
 		wait(&st);
 		LOG("child process finished: %d", st);
+		return st; // 子プロセスの実行結果を返す
 	}
 }
 
-void exec_pipe(node_t *node, int is_root) {
+int exec_pipe(node_t *node, int is_root) {
 	int st;
 	fflush(stdout);
 
@@ -153,9 +155,10 @@ void exec_pipe(node_t *node, int is_root) {
 		wait(&st); // 子1のプロセスが終わるまで待つ
 		LOG("wait for pidl done (%d)", st);
 		if (!is_root) {
-			exit(0);
+			exit(st);
 		}
 	}
+	return 0;
 }
 
 void exec_sequence(node_t *node) {
@@ -167,6 +170,18 @@ void exec_sequence(node_t *node) {
 	}
 }
 
+void exec_and(node_t *node) {
+	if (invoke_node(node->lhs) == 0) {
+		invoke_node(node->rhs);
+	}
+}
+
+void exec_or(node_t *node) {
+	if (invoke_node(node->lhs) != 0) {
+		invoke_node(node->rhs);
+	}
+}
+
 /** Run a node and obtain an exit status. */
 int invoke_node(node_t *node) {
 	LOG("Invoke: %s", inspect_node(node));
@@ -175,36 +190,35 @@ int invoke_node(node_t *node) {
 		for (int i = 0; node->argv[i] != NULL; i++) {
 			LOG("node->argv[%d]: \"%s\"", i, node->argv[i]);
 		}
-		exec_single(node);
-
-		return 0;
+		return exec_single(node);
 
 	case N_PIPE: /* foo | bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
-		exec_pipe(node, 1);
-
-		return 0;
+		return exec_pipe(node, 1);
 
 	case N_REDIRECT_IN: /* foo < bar */
 	case N_REDIRECT_OUT:
 	case N_REDIRECT_APPEND: /* foo >> bar */
 		LOG("node->filename: %s", node->filename);
-		exec_single(node);
-		return 0;
+		return exec_single(node);
 
 	case N_SEQUENCE: /* foo ; bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
 		exec_sequence(node);
-
 		return 0;
 
 	case N_AND: /* foo && bar */
-	case N_OR:	/* foo || bar */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
 		LOG("node->rhs: %s", inspect_node(node->rhs));
+		exec_and(node);
+		return 0;
 
+	case N_OR: /* foo || bar */
+		LOG("node->lhs: %s", inspect_node(node->lhs));
+		LOG("node->rhs: %s", inspect_node(node->rhs));
+		exec_or(node);
 		return 0;
 
 	case N_SUBSHELL: /* ( foo... ) */
