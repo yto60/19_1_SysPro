@@ -128,8 +128,6 @@ void exec_pipe(node_t *node, int is_root) {
 		my_exec(node->lhs);
 	} else {
 		// 親
-		wait(&st); // 子1のプロセスが終わるまで待つ
-		LOG("wait for pidl done (%d)", st);
 		// 子2をつくる
 		pid_t pidr = fork();
 		LOG("pidr: %d\n", pidr);
@@ -149,11 +147,13 @@ void exec_pipe(node_t *node, int is_root) {
 		} else {
 			// 親
 			closefd(fd);
-			wait(&st);
+			wait(&st); // 子2が終わるまで待つ
 			LOG("%d: wait for pidr done (%d)", pidr, st);
-			if (!is_root) {
-				exit(0);
-			}
+		}
+		wait(&st); // 子1のプロセスが終わるまで待つ
+		LOG("wait for pidl done (%d)", st);
+		if (!is_root) {
+			exit(0);
 		}
 	}
 }
