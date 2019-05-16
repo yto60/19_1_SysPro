@@ -1,5 +1,6 @@
 *.bin
 mycat
+mysh
 
 
 # Created by https://www.gitignore.io/api/c
