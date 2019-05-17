@@ -1,8 +1,4 @@
 *.bin
-mycat
-mysh
-03/test*.txt
-03/po.txt
 
 
 # Created by https://www.gitignore.io/api/c
