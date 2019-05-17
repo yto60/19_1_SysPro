@@ -23,15 +23,19 @@ bool streql(const char *lhs, const char *rhs) {
 
 void wait_children(int pid, int options) {
 	int status;
+
 	pid_t waited_pid = waitpid(pid, &status, options);
+	// 成功すると子プロセスのプロセスID，状態変化がなければ0，エラーの場合は-1が返る
+
 	if (waited_pid == -1) {
-		// エラーの場合
+		// エラー処理
 		if (errno == ECHILD) {
 			/* すでに成仏していた（何もしない） */
 		} else {
 			PERROR_DIE(NULL);
 		}
 	} else {
+		// 子プロセスの状態が変化している
 		LOG("Waited: pid=%d, status=%d, exit_status=%d", waited_pid, status,
 			WEXITSTATUS(status));
 		if (WIFEXITED(status)) {
@@ -76,8 +80,10 @@ int invoke_node(node_t *node) {
 
 		/* 生成した子プロセスを待機 */
 		if (node->async) {
+			// シグナルハンドラを設定
 			signal(SIGCHLD, sigchld_handler);
 		} else {
+			// その場で待つ
 			wait_children(pid, 0);
 		}
 
