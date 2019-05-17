@@ -1,0 +1,11 @@
+mysh[1]% ./count 10 A
+^Zmysh[2]% 
+mysh[3]% echo Hello_World!
+Hello_World!
+FIRE
+mysh[4]% fg
+A-3 A-2 A-1 FIRE
+mysh[5]% ./count 10 B
+^Zmysh[6]% bg
+mysh[7]% B-3 B-2 B-1 FIRE
+^D
