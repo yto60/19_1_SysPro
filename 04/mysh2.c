@@ -48,6 +48,14 @@ void sigchld_handler(int sig) {
 	wait_children(-1, WNOHANG);
 }
 
+void sigtstp_handler(int sig) {
+	// ここのpidを止めたい子プロセスにしたい
+	kill(pid, sig);
+}
+void set_sigstp_handler(int sig, int pid) {
+	signal(SIGTSTP, sigtstp_handler);
+}
+
 int invoke_node(node_t *node) {
 	LOG("Invoke: %s", inspect_node(node));
 	pid_t pid;
@@ -75,6 +83,7 @@ int invoke_node(node_t *node) {
 
 		/* 子に独立したプロセスグループを割り振る */
 		if (setpgid(pid, pid) == -1) {
+			// エラーの場合
 			PERROR_DIE(NULL);
 		}
 
@@ -83,7 +92,7 @@ int invoke_node(node_t *node) {
 			// シグナルハンドラを設定
 			signal(SIGCHLD, sigchld_handler);
 		} else {
-			// その場で待つ
+			// 作った子プロセスを待つ
 			wait_children(pid, 0);
 		}
 
