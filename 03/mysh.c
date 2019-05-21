@@ -223,6 +223,7 @@ int invoke_node(node_t *node) {
 
 	case N_SUBSHELL: /* ( foo... ) */
 		LOG("node->lhs: %s", inspect_node(node->lhs));
+		invoke_node(node->lhs);
 
 		return 0;
 
