@@ -20,13 +20,17 @@ $ ./my-webclient
 ### Exercise2 ### 課題2
 # 改造したソースコードの解説(どの部分をどのように改造したか)と考察を記載せよ．
 
-リクエストヘッダーに応じて content_type と status_code を定めた。 (// get content type and status code 以下)
-また、要求されたファイルが存在する場合はそのファイルを開いてファイルの内容を返し、存在しない場合は not_found_body を返すようにした。 (// send body 以下)
-最後に、fflush(fout) を実行する。fprintf によるファイルへの書き込みのバッファリングは通常 block buffered であるため (man setbuf より)、fflush が実行されて初めてデータがクライアントに送信される。
+session関数を以下のように改造した。
+- リクエストヘッダーに応じて content_type と status_code を定めた。 (// get content type and status code 以下)
+- 要求されたファイルが存在する場合はそのファイルを開いてファイルの内容を返し、存在しない場合は not_found_body を返すようにした。 (// send body 以下)
+- その後、fflush(fout) を実行するようにした。fprintf によるファイルへの書き込みのバッファリングは通常 block buffered であるため (man setbuf より)、fflush が実行されて初めてデータがクライアントに送信される。
 
 ### Exercise3 ### 課題3
 # 改造したソースコードの解説と考察を記載せよ．
 
+main関数を以下のように改造した。
+- while文の中の accept の直後に fork を行い、子プロセスの中で session 関数を呼び出すようにした。通信終了後はそのまま return 0 でプロセスが終了するようにした。
+- 親プロセスは、子プロセスを wait した後、close(connfd) によって通信を切断した。(close が子プロセスと親プロセスの両方で実行された時点で、通信が切断される。)
 
 
 ### ExerciseA ### 発展課題A

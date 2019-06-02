@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -139,7 +140,7 @@ void session(int fd, char *cli_addr, int cli_port) {
 	fclose(fin);
 	fclose(fout);
 	close(fd);
-	printf("Connection closed.\n");
+	printf("Connection closed (child).\n");
 	fflush(stdout);
 }
 
@@ -168,7 +169,32 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		addrlen = sizeof(caddr);
 		connfd = accept(listfd, (struct sockaddr *)&caddr, (socklen_t *)&addrlen);
-		session(connfd, inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port));
+
+		// fork
+		fflush(stdout);
+		pid_t pid = fork();
+
+		if (pid == -1) {
+			// エラー処理
+			perror("fork");
+			exit(errno);
+		}
+
+		if (pid == 0) {
+			// child process
+			session(connfd, inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port));
+			return 0;
+		} else {
+			// parent process
+			int st;
+			wait(&st);
+			printf("child process finished: %d\n", st);
+
+			// close connection (parent)
+			close(connfd);
+			printf("Connection closed (parent).\n");
+			fflush(stdout);
+		}
 	}
 
 	return 0;
