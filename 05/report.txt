@@ -3,14 +3,19 @@
 # 課題Nの回答は，### ExerciseN ### のコメント行の下の領域に記述して下さい．
 
 ### ID ### 学籍番号を「NN_NNNNN」のように書いて下さい
+17_16210
 
 ### Email ### mメールアドレスを書いて下さい
+yamane.h.aa@m.titech.ac.jp
 
 ### Name ### 氏名を「東工 太郎」のように書いて下さい
+山根 初美
 
 ### Exercise1 ### 課題1
 # 完成させたmy-webclientからsimple-webserverに接続した際の実行結果をペーストせよ．
-
+$ ./my-webclient 
+<html><body><h1>Very Simple Web Server</h1>Hello. Your message is:
+<hr><pre>GET / HTTP/1.0
 
 ### Exercise2 ### 課題2
 # 改造したソースコードの解説(どの部分をどのように改造したか)と考察を記載せよ．
