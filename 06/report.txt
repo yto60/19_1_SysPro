@@ -3,24 +3,59 @@
 # 課題Nの回答は，### ExerciseN ### のコメント行の下の領域に記述して下さい．
 
 ### ID ### 学籍番号を「NN_NNNNN」のように書いて下さい
+17_16210
 
 ### Email ### mメールアドレスを書いて下さい
+yamane.h.aa@m.titech.ac.jp
 
 ### Name ### 氏名を「東工 太郎」のように書いて下さい
+山根 初美
 
 ### Exercise1 ### 課題1
 # 実行結果をペーストせよ．
 
+$ ./inst0
+>>> main (0x1039f2d30)
+main: 0x1039f2d30
+>>> foo (0x1039f2da0)
+main -> foo: 0x1039f2da0
+>>> bar (0x1039f2e00)
+main -> foo -> bar: 0x1039f2e00
+<<< bar (0x1039f2e00)
+>>> baz (0x1039f2e60)
+main -> foo -> baz: 0x1039f2e60
+<<< baz (0x1039f2e60)
+<<< foo (0x1039f2da0)
+>>> foo (0x1039f2da0)
+main -> foo: 0x1039f2da0
+>>> bar (0x1039f2e00)
+main -> foo -> bar: 0x1039f2e00
+<<< bar (0x1039f2e00)
+>>> baz (0x1039f2e60)
+main -> foo -> baz: 0x1039f2e60
+<<< baz (0x1039f2e60)
+<<< foo (0x1039f2da0)
+<<< main (0x1039f2d30)
 
 
 ### Exercise2 ### 課題2
 # inst0-simple 実行時の実行結果の cg.dot の中身をペーストせよ．
+
+strict digraph G {
+	main -> foo;
+	foo -> bar;
+	foo -> baz;
+	main -> foo;
+	foo -> bar;
+	foo -> baz;
+}
 
 
 
 ### ExerciseA ### 発展課題A
 # inst0-simple 実行時の実行結果の cg.dot の中身をペーストせよ．
 
+実装していない。
 
 
 ### Comment ### 感想（採点対象外，好きに書いて下さい．）
