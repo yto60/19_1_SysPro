@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 char *not_found_body =
@@ -52,21 +53,27 @@ void send_content_data(FILE *from, FILE *to) {
 	}
 }
 
-void session(int fd, char *cli_addr, int cli_port) {
+int session(int fd, char *cli_addr, int cli_port) {
 
 	FILE *fin, *fout;
-	fin = fdopen(fd, "r");
 	fout = fdopen(fd, "w");
+	fin = fdopen(fd, "r");
+
+	int connection_close = 0;
 
 	/* read request line */
 	char request_buf[BUFSIZ];
-	if (fgets(request_buf, sizeof(request_buf), fin) == NULL) {
-		fflush(fout);
-		fclose(fin);
-		fclose(fout);
-		close(fd);
-		return; // disconnected
-	}
+	while (fgets(request_buf, sizeof(request_buf), fin) == NULL)
+		;
+	// if (fgets(request_buf, sizeof(request_buf), fin) == NULL) {
+	// 	fflush(fout);
+	// 	fclose(fin);
+	// 	fclose(fout);
+	// 	close(fd);
+	// 	printf("1 Connection closed (child).\n");
+	// 	fflush(stdout);
+	// 	return 1; // disconnected
+	// }
 
 	/* parse request line */
 	char method[BUFSIZ];
@@ -85,12 +92,16 @@ void session(int fd, char *cli_addr, int cli_port) {
 
 		/* read header lines */
 		char headers_buf[BUFSIZ];
-		if (fgets(headers_buf, sizeof(headers_buf), fin) == NULL) {
-			fclose(fin);
-			fclose(fout);
-			close(fd);
-			return; // disconnected from client
-		}
+		while (fgets(headers_buf, sizeof(headers_buf), fin) == NULL)
+			;
+		// if (fgets(headers_buf, sizeof(headers_buf), fin) == NULL) {
+		// 	fclose(fin);
+		// 	fclose(fout);
+		// 	close(fd);
+		// 	printf("2 Connection closed (child).\n");
+		// 	fflush(stdout);
+		// 	return 1; // disconnected from client
+		// }
 
 		/* check header end */
 		if (strcmp(headers_buf, "\r\n") == 0) {
@@ -106,6 +117,10 @@ void session(int fd, char *cli_addr, int cli_port) {
 		printf("Header: %s %s\n", header, value);
 		fflush(stdout);
 
+		if (strcmp(header, "Connection:") == 0 && strcmp(value, "close") == 0) {
+			connection_close = 1;
+		}
+
 	} // while
 
 	//   送信部分を完成させなさい．
@@ -113,10 +128,12 @@ void session(int fd, char *cli_addr, int cli_port) {
 	// get content type and status code
 	char *content_type;
 	char *status_code;
-	int notfound = find_file(path) == -1;
+	int content_length = find_file(path);
+	int notfound = content_length == -1;
 	if (notfound) {
 		content_type = get_content_type(".html");
 		status_code = "404 Not Found";
+		content_length = strlen(not_found_body);
 	} else {
 		content_type = get_content_type(path);
 		status_code = "200 OK";
@@ -125,6 +142,7 @@ void session(int fd, char *cli_addr, int cli_port) {
 	// send header
 	fprintf(fout, "HTTP/1.1 %s\r\n", status_code);
 	fprintf(fout, "Content-Type: %s\r\n", content_type);
+	fprintf(fout, "Content-Length: %d\r\n", content_length);
 	fprintf(fout, "\r\n");
 
 	// send body
@@ -137,18 +155,71 @@ void session(int fd, char *cli_addr, int cli_port) {
 	fflush(fout);
 
 	/* close connection */
-	fclose(fin);
-	fclose(fout);
-	close(fd);
-	printf("Connection closed (child).\n");
+	if (connection_close) {
+		fclose(fin);
+		fclose(fout);
+		close(fd);
+		printf("Connection closed (child).\n");
+		fflush(stdout);
+		return 1;
+	} else {
+		fflush(fout);
+		fflush(fin);
+		return 0;
+	}
+}
+
+int while_listening(int listfd) {
+	struct sockaddr_in caddr;
+	unsigned int addrlen = sizeof(caddr);
+	int connfd = accept(listfd, (struct sockaddr *)&caddr, (socklen_t *)&addrlen);
+	printf("accept\n");
 	fflush(stdout);
+
+	// fork
+	printf("fork\n");
+	fflush(stdout);
+	pid_t pid = fork();
+
+	if (pid == -1) {
+		// エラー処理
+		perror("fork");
+		exit(errno);
+	}
+
+	if (pid == 0) {
+		// child process
+		while (1) {
+			if (session(connfd, inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port)) ==
+					1) {
+				break;
+			}
+		}
+		return 0;
+	} else {
+		// parent process
+		while_listening(listfd);
+
+		int st;
+		wait(&st);
+		printf("child process finished\n");
+		if (WIFEXITED(st)) {
+			printf("exit status=%d\n", WEXITSTATUS(st));
+		}
+
+		// close connection (parent)
+		close(connfd);
+		printf("Connection closed (parent).\n");
+		fflush(stdout);
+		return 0;
+	}
 }
 
 int main(int argc, char *argv[]) {
 
-	int listfd, connfd, optval = 1, port = 10000;
-	unsigned int addrlen;
-	struct sockaddr_in saddr, caddr;
+	int listfd, optval = 1, port = 10000;
+	// unsigned int addrlen;
+	struct sockaddr_in saddr;
 
 	if (argc >= 2) {
 		port = atoi(argv[1]);
@@ -166,36 +237,7 @@ int main(int argc, char *argv[]) {
 
 	listen(listfd, 10);
 
-	while (1) {
-		addrlen = sizeof(caddr);
-		connfd = accept(listfd, (struct sockaddr *)&caddr, (socklen_t *)&addrlen);
-
-		// fork
-		fflush(stdout);
-		pid_t pid = fork();
-
-		if (pid == -1) {
-			// エラー処理
-			perror("fork");
-			exit(errno);
-		}
-
-		if (pid == 0) {
-			// child process
-			session(connfd, inet_ntoa(caddr.sin_addr), ntohs(caddr.sin_port));
-			return 0;
-		} else {
-			// parent process
-			int st;
-			wait(&st);
-			printf("child process finished: %d\n", st);
-
-			// close connection (parent)
-			close(connfd);
-			printf("Connection closed (parent).\n");
-			fflush(stdout);
-		}
-	}
+	while_listening(listfd);
 
 	return 0;
 }
